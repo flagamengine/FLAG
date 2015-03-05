@@ -4,8 +4,8 @@
 FLAG Game Engine - POLEEDITOR.js
 Author: Zac Zidik
 URL: www.flagamengine.com/POLE
-version 1.0.0
-updated 4/17/2014
+version 1.0.1
+updated 3/5/2015
 
 This is the editor code for the POLE object used by FLAG.
 Use the editor to create all the assets and scenes for your game.
@@ -12883,27 +12883,28 @@ POLEEDITOR.prototype.tools_tileSprite_draw = function(){
 				//clear the tileID and tileSheetIDs
 				POLE.scenes[this.sceneSelected].layers[this.activeLayer].tileIDs[FLAG.Pointer.tileOn.row][FLAG.Pointer.tileOn.col] = 0;
 				POLE.scenes[this.sceneSelected].layers[this.activeLayer].tileSheetIDs[FLAG.Pointer.tileOn.row][FLAG.Pointer.tileOn.col] = 0;
-			
-				//add new tile sprite
-				POLE.scenes[this.sceneSelected].tileSprites.push(
-				{
-				name:POLE.tileSheets[this.tileSelected.sheetNum].animations[this.tileAnimationSelected].name + "_" + numTileSprites,
-				row:Number(FLAG.Pointer.tileOn.row),
-				col:Number(FLAG.Pointer.tileOn.col),
-				pIndex:Number(this.tileSelected.sheetNum),
-				animation:Number(this.tileAnimationSelected),
-				frame:Number(POLE.tileSheets[this.tileSelected.sheetNum].animations[this.tileAnimationSelected].startFrame),
-				layer:Number(this.activeLayer),
-				playing:true
-				});
 				
-				if(window.getComputedStyle(document.getElementById('code_container')).getPropertyValue('visibility') == "visible"){
-					this.pole_update_display();
-				}
+				//create a new tile sprite
+				var newTileSprite = {
+					name:POLE.tileSheets[this.tileSelected.sheetNum].animations[this.tileAnimationSelected].name + "_" + numTileSprites,
+					row:Number(FLAG.Pointer.tileOn.row),
+					col:Number(FLAG.Pointer.tileOn.col),
+					pIndex:Number(this.tileSelected.sheetNum),
+					animation:Number(this.tileAnimationSelected),
+					frame:Number(POLE.tileSheets[this.tileSelected.sheetNum].animations[this.tileAnimationSelected].startFrame),
+					layer:Number(this.activeLayer),
+					playing:true
+				};
 				
-				FLAG.Scene.tileSprites = POLE.scenes[this.sceneSelected].tileSprites;
+				//add new tile sprite to pole
+				POLE.scenes[this.sceneSelected].tileSprites.push(newTileSprite);
+				
+				//create the tile sprite in the scene
+				FLAG.addTileSprite(POLE.tileSheets[this.tileSelected.sheetNum].animations[this.tileAnimationSelected].name,newTileSprite.name,newTileSprite);
 				
 				this.scene_assets_tileSprites_fillList();
+			
+			
 			}
 		}
 	}
@@ -12919,21 +12920,31 @@ POLEEDITOR.prototype.tools_tileSprite_draw = function(){
 POLEEDITOR.prototype.tools_tileSprite_erase = function(){
 	var numTileSprites = POLE.scenes[this.sceneSelected].tileSprites.length;
 	var tileSpritesToKeep = [];
+	var tileSpritesToRemove = [];
 	//check for existing tile sprite on tile and layer
 	for(var ts=0;ts<numTileSprites;ts++){
 		if(POLE.scenes[this.sceneSelected].tileSprites[ts].row == FLAG.Pointer.tileOn.row &&
 			POLE.scenes[this.sceneSelected].tileSprites[ts].col == FLAG.Pointer.tileOn.col &&
 			POLE.scenes[this.sceneSelected].tileSprites[ts].layer == this.activeLayer){
 			
+			tileSpritesToRemove.push(POLE.scenes[this.sceneSelected].tileSprites[ts]);			
 		}else{
 			tileSpritesToKeep.push(POLE.scenes[this.sceneSelected].tileSprites[ts]);
 		}
 	}
 	
 	if(POLE.scenes[this.sceneSelected].tileSprites.length != tileSpritesToKeep.length){
+		//set the list of pole to the keepers
 		POLE.scenes[this.sceneSelected].tileSprites = tileSpritesToKeep;
-		FLAG.Scene.tileSprites = tileSpritesToKeep;
+		//remove the tile sprites from the displayed scene
+		var numToRemove = tileSpritesToRemove.length;
+		for(var r=0;r<numToRemove;r++){
+			FLAG.removeTileSprite(tileSpritesToRemove[r].name);
+		}
+		
+		//empty arrays
 		tileSpritesToKeep = [];
+		tileSpritesToRemove = []
 		
 		//clear the tileID and tileSheetIDs
 		POLE.scenes[this.sceneSelected].layers[this.activeLayer].tileIDs[FLAG.Pointer.tileOn.row][FLAG.Pointer.tileOn.col] = 0;

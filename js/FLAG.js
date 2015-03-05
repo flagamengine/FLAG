@@ -4,8 +4,8 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.18
-updated 4/8/2014
+version 3.0.20
+updated 3/5/2015
 
 This is the engine code for the FLAG Game Engine. You can use this file locally,
 on your server, or the most up to date version at www.flagamengine.com/FLAG/FLAG.js
@@ -940,23 +940,43 @@ FLAGENGINE.prototype.cycleSpriteFrames = function(){
 	//CYCLE TILE SPRITE FRAMES
 	var numTileSprites = this.Scene.tileSprites.length;
 	for(var i=0;i<numTileSprites;i++){
+		var tiledSprite = this.Scene.tileSprites[i];
 		//make sure tileSheet is right
-		if(this.Scene.layers[this.Scene.tileSprites[i].layer].tileSheetIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] != this.Scene.tileSprites[i].pIndex){
-			this.Scene.layers[this.Scene.tileSprites[i].layer].tileSheetIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] = this.Scene.tileSprites[i].pIndex;
+		if(this.Scene.layers[tiledSprite.layer].tileSheetIDs[tiledSprite.row][tiledSprite.col] != tiledSprite.pIndex){
+			this.Scene.layers[tiledSprite.layer].tileSheetIDs[tiledSprite.row][tiledSprite.col] = tiledSprite.pIndex;
 		}
 		//make sure tile fits inside animation
-		if(this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] < this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].startFrame){
-			this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] = this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].startFrame;
-		}else if(this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] > this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].endFrame){
-			this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] = this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].endFrame;
+		if(this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] < this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].startFrame){
+			this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] = this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].startFrame;
+		}else if(this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] > this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].endFrame){
+			this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] = this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].endFrame;
 		}
 	
-		if(this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] < this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].endFrame){
-			if(this.Scene.tileSprites[i].playing == true){
-				this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] += 1;
-			}
-		}else if(this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].loop == true && this.Scene.tileSprites[i].playing == true){
-			this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] = this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].startFrame;
+		if(this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] < this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].endFrame){
+			if(tiledSprite.playing == true){
+				this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] += 1;
+			}		
+		//check if the tile sprite is set to loop	
+		}else if(tiledSprite.loop == true  && tiledSprite.playing == true){
+			//is there a loop count
+			if(tiledSprite.loopCount != null){
+				//add one to the loops
+				tiledSprite.loops += 1;
+				//is number of times it has looped less than the loop count
+				if(tiledSprite.loops < tiledSprite.loopCount){
+					//loop back to the beginning of the animation
+					this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] = this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].startFrame;				
+				}else{
+					//stop the animation
+					tiledSprite.stop();
+				}
+			}else{
+				//loop back to the beginning of the animation
+				this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] = this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].startFrame;
+			}				
+		}else{
+			//stop the animation
+			tiledSprite.stop();			
 		}
 	}
 	
@@ -967,9 +987,28 @@ FLAGENGINE.prototype.cycleSpriteFrames = function(){
 		if(tiledObject.animation != null && tiledObject.playing == true){
 			//cycle the tile object's animation frames 
 			if(tiledObject.frame < this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].endFrame){
-				tiledObject.frame += 1;	
-			}else if(this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].loop == true){
-				tiledObject.frame = this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].startFrame;
+				tiledObject.frame += 1;				
+			//check if the tiled object is set to loop	
+			}else if(tiledObject.loop == true){
+				//is there a loop count
+				if(tiledObject.loopCount != null){
+					//add one to the loops
+					tiledObject.loops += 1;
+					//is number of times it has looped less than the loop count
+					if(tiledObject.loops < tiledObject.loopCount){
+						//loop back to the beginning of the animation
+						tiledObject.frame = this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].startFrame;					
+					}else{
+						//stop the animation
+						tiledObject.stop();
+					}
+				}else{
+					//loop back to the beginning of the animation
+					tiledObject.frame = this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].startFrame;					
+				}				
+			}else{
+				//stop the animation
+				tiledObject.stop();			
 			}
 		}
 	}
@@ -977,24 +1016,63 @@ FLAGENGINE.prototype.cycleSpriteFrames = function(){
 	//CYCLE SPRITE FRAMES
 	var numOfSprites = this.Scene.sprites.length;
 	for(var s=0;s<numOfSprites;s++){
-		if(this.Scene.sprites[s].animation != null && this.Scene.sprites[s].playing == true){
+		var sprite = this.Scene.sprites[s];
+		if(sprite.animation != null && sprite.playing == true){
 			//cycle the scene's decal animation frames
-			if(this.Scene.sprites[s].frame < this.Scene.spriteSheets[this.Scene.sprites[s].pIndex].animations[this.Scene.sprites[s].animation].endFrame){
-				this.Scene.sprites[s].frame += 1;	
-			}else if(this.Scene.spriteSheets[this.Scene.sprites[s].pIndex].animations[this.Scene.sprites[s].animation].loop == true){
-				this.Scene.sprites[s].frame = this.Scene.spriteSheets[this.Scene.sprites[s].pIndex].animations[this.Scene.sprites[s].animation].startFrame;
+			if(sprite.frame < this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].endFrame){
+				sprite.frame += 1;	
+			//check if the sprite itself is set to loop	
+			}else if(sprite.loop == true){
+				//is there a loop count
+				if(sprite.loopCount != null){
+					//add one to the loops
+					sprite.loops += 1;
+					//is number of times it has looped less than the loop count
+					if(sprite.loops < sprite.loopCount){
+						//loop back to the beginning of the animation
+						sprite.frame = this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].startFrame;						
+					}else{
+						//stop the animation
+						sprite.stop();
+					}
+				}else{
+					//loop back to the beginning of the animation
+					sprite.frame = this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].startFrame;
+				}				
+			}else{
+				//stop the animation
+				sprite.stop();
 			}
 		}
 		
 		//SPRITE DECALS
-		var numOfDecals = this.Scene.sprites[s].decals.length;
+		var numOfDecals = sprite.decals.length;
 		for(var d=0;d<numOfDecals;d++){
-			if(this.Scene.sprites[s].decals[d].animation != null && this.Scene.sprites[s].decals[d].playing == true){
+			if(sprite.decals[d].animation != null && sprite.decals[d].playing == true){
 				//cycle the actors' decal animation frames
-				if(this.Scene.sprites[s].decals[d].frame < this.Scene.spriteSheets[this.Scene.sprites[s].decals[d].pIndex].animations[this.Scene.sprites[s].decals[d].animation].endFrame){
-					this.Scene.sprites[s].decals[d].frame += 1;	
-				}else if(this.Scene.spriteSheets[this.Scene.sprites[s].decals[d].pIndex].animations[this.Scene.sprites[s].decals[d].animation].loop == true){
-					this.Scene.sprites[s].decals[d].frame = this.Scene.spriteSheets[this.Scene.sprites[s].decals[d].pIndex].animations[this.Scene.sprites[s].decals[d].animation].startFrame;
+				if(sprite.decals[d].frame < this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].endFrame){
+					sprite.decals[d].frame += 1;					
+				//check if the decal itself is set to loop	
+				}else if(sprite.decals[d].loop == true){
+					//is there a loop count
+					if(sprite.decals[d].loopCount != null){
+						//add one to the loops
+						sprite.decals[d].loops += 1;
+						//is number of times it has looped less than the loop count
+						if(sprite.decals[d].loops < sprite.decals[d].loopCount){
+							//loop back to the beginning of the animation
+							sprite.decals[d].frame = this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].startFrame;					
+						}else{
+							//stop the animation
+							sprite.decals[d].stop();
+						}
+					}else{
+						//loop back to the beginning of the animation
+						sprite.decals[d].frame = this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].startFrame;
+					}				
+				}else{
+					//stop the animation
+					sprite.decals[d].stop();
 				}
 			}
 		}
@@ -1007,26 +1085,65 @@ FLAGENGINE.prototype.cycleSpriteFrames = function(){
 		var bodiesToKeep = [];
 		var bodiesToDestroy = [];
 		for(var j=0;j<numBodies;j++){
-			if(this.Scene.actors[i].bodies[j].Sprite !== null){
+			var sprite = this.Scene.actors[i].bodies[j].Sprite;		
+			if(sprite !== null){
 				//BODY SPRITE
-				if(this.Scene.actors[i].bodies[j].Sprite.animation != null && this.Scene.actors[i].bodies[j].Sprite.playing == true){
+				if(sprite.animation != null && sprite.playing == true){
 					//cycle the actors' animation frames 
-					if(this.Scene.actors[i].bodies[j].Sprite.frame < this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.animation].endFrame){
-						this.Scene.actors[i].bodies[j].Sprite.frame += 1;	
-					}else if(this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.animation].loop == true){
-						this.Scene.actors[i].bodies[j].Sprite.frame = this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.animation].startFrame;
+					if(sprite.frame < this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].endFrame){
+						sprite.frame += 1;					
+					//check if the sprite itself is set to loop	
+					}else if(sprite.loop == true){
+						//is there a loop count
+						if(sprite.loopCount != null){
+							//add one to the loops
+							sprite.loops += 1;
+							//is number of times it has looped less than the loop count
+							if(sprite.loops < sprite.loopCount){
+								//loop back to the beginning of the animation
+								sprite.frame = this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].startFrame;						
+							}else{
+								//stop the animation
+								sprite.stop();
+							}
+						}else{
+							//loop back to the beginning of the animation
+							sprite.frame = this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].startFrame;
+						}				
+					}else{
+						//stop the animation
+						sprite.stop();
 					}
 				}
 		
 				//BODY SPRITE DECALS
-				var numOfDecals = this.Scene.actors[i].bodies[j].Sprite.decals.length;
+				var numOfDecals = sprite.decals.length;
 				for(var d=0;d<numOfDecals;d++){
-					if(this.Scene.actors[i].bodies[j].Sprite.decals[d].animation != null && this.Scene.actors[i].bodies[j].Sprite.decals[d].playing == true){
+					if(sprite.decals[d].animation != null && sprite.decals[d].playing == true){
 						//cycle the actors' decal animation frames
-						if(this.Scene.actors[i].bodies[j].Sprite.decals[d].frame < this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.decals[d].pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.decals[d].animation].endFrame){
-							this.Scene.actors[i].bodies[j].Sprite.decals[d].frame += 1;	
-						}else if(this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.decals[d].pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.decals[d].animation].loop == true){
-							this.Scene.actors[i].bodies[j].Sprite.decals[d].frame = this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.decals[d].pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.decals[d].animation].startFrame;
+						if(sprite.decals[d].frame < this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].endFrame){
+							sprite.decals[d].frame += 1;
+						//check if the decal itself is set to loop	
+						}else if(sprite.decals[d].loop == true){
+							//is there a loop count
+							if(sprite.decals[d].loopCount != null){
+								//add one to the loops
+								sprite.decals[d].loops += 1;
+								//is number of times it has looped less than the loop count
+								if(sprite.decals[d].loops < sprite.decals[d].loopCount){
+									//loop back to the beginning of the animation
+									sprite.decals[d].frame = this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].startFrame;					
+								}else{
+									//stop the animation
+									sprite.decals[d].stop();
+								}
+							}else{
+								//loop back to the beginning of the animation
+								sprite.decals[d].frame = this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].startFrame;
+							}				
+						}else{
+							//stop the animation
+							sprite.decals[d].stop();
 						}
 					}
 				}
@@ -1906,7 +2023,6 @@ FLAGENGINE.prototype.imageSmoothing = function(smooth){
 	//SMOOTH
 	if(smooth == true){
 		//Browser compatibility - Chrome, Firefox, Opera
-		this.Context.webkitImageSmoothingEnabled = true;
 		this.Context.imageSmoothingEnabled = true;
 		this.Context.mozImageSmoothingEnabled = true;
 		this.Context.oImageSmoothingEnabled = true;
@@ -1918,7 +2034,6 @@ FLAGENGINE.prototype.imageSmoothing = function(smooth){
   	//PIXELY
 	}else if(smooth == false){
 		//Browser compatibility - Chrome, Firefox, Opera
-		this.Context.webkitImageSmoothingEnabled = false;
 		this.Context.imageSmoothingEnabled = false;
 		this.Context.mozImageSmoothingEnabled = false;
 		this.Context.oImageSmoothingEnabled = false;
@@ -3601,6 +3716,11 @@ FLAGENGINE.prototype.Tween = function(object, property, targetVal, duration, eas
     	case "margin-left":
 			var style = window.getComputedStyle(object),
     		b = style.getPropertyValue('margin-left');
+    		object = object.style;
+    		break;
+    	case "margin-top":
+			var style = window.getComputedStyle(object),
+    		b = style.getPropertyValue('margin-top');
     		object = object.style;
     		break;
     	case "opacity":
@@ -7244,6 +7364,9 @@ function FLAGSPRITE(name,pIndex,x,y,frame,animation,layer,playing,alpha,gui,fron
 	if(front == undefined){this.front = true}else{this.front = front};
 	if(gui == undefined){this.gui = false}else{this.gui = gui};
 	if(layer == undefined){this.layer = 0}else{this.layer = layer};
+	this.loop = true;
+	this.loopCount = null;
+	this.loops = 0;
 	this.name = name;
 	this.pIndex = pIndex;
 	if(playing == undefined){this.playing = true}else{this.playing = playing};
@@ -7616,6 +7739,11 @@ FLAGSPRITE.prototype.removeDecal = function(decal){
 
 FLAGSPRITE.prototype.setAnimation = function(animation){
 	var animationFound = -1;
+	//if animation is given as null
+	if(animation == null){
+		//set the animation to null
+		this.animation = null;
+	}
 	//if the animation is given as a name
 	if(isNaN(animation) == true){
 		//find the number that matches the name in the sprites
@@ -7637,6 +7765,9 @@ FLAGSPRITE.prototype.setAnimation = function(animation){
 		this.frame = FLAG.Scene.spriteSheets[this.pIndex].animations[animationFound].startFrame;
 		this.animation = animationFound;
 	}
+	
+	//reset the amount of loops, since the animation was just changed
+	this.loops = 0;
 }
 
 FLAGSPRITE.prototype.setFrame = function(frame){
@@ -7665,7 +7796,9 @@ FLAGSPRITE.prototype.setFrame = function(frame){
 }
 
 FLAGSPRITE.prototype.stop = function(){
-	this.playing = false;
+	this.playing = false;	
+	//reset the amount of loops, since the animation has stopped
+	this.loops = 0;
 }
 
 FLAGSPRITE.prototype.tilePath = function(p){
@@ -7885,6 +8018,9 @@ function FLAGTILEDOBJECT(name,pIndex,layer,row,col,animation,frame){
 	this.decals = [];
 	this.frame = frame || 0;
 	this.layer = layer;
+	this.loop = true;
+	this.loopCount = null;
+	this.loops = 0;
 	this.name = name;
 	this.playing = true;
 	this.row = row;
@@ -7901,6 +8037,11 @@ FLAGTILEDOBJECT.prototype.play = function(){
 
 FLAGTILEDOBJECT.prototype.setAnimation = function(animation){
 	var animationFound = -1;
+	//if animation is given as null
+	if(animation == null){
+		//set the animation to null
+		this.animation = null;
+	}
 	//if the animation is given as a name
 	if(isNaN(animation) == true){
 		//find the number that matches the name in the tiledObjectSheets
@@ -7951,6 +8092,8 @@ FLAGTILEDOBJECT.prototype.setFrame = function(frame){
 
 FLAGTILEDOBJECT.prototype.stop = function(){
 	this.playing = false;
+	//reset the amount of loops, since the animation has stopped
+	this.loops = 0;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------
@@ -7970,6 +8113,9 @@ function FLAGTILESPRITE(name,pIndex,row,col,animation,frame,layer,playing){
 	this.col = col;
 	this.frame = frame;
 	this.layer = layer;
+	this.loop = true;
+	this.loopCount = null;
+	this.loops = 0;
 	this.name = name;
 	this.pIndex = pIndex;
 	this.playing = playing || true;
@@ -7986,6 +8132,11 @@ FLAGTILESPRITE.prototype.play = function(){
 
 FLAGTILESPRITE.prototype.setAnimation = function(animation){
 	var animationFound = -1;
+	//if animation is given as null
+	if(animation == null){
+		//set the animation to null
+		this.animation = null;
+	}
 	//if the animation is given as a name
 	if(isNaN(animation) == true){
 		//find the number that matches the name in the tileSheets
@@ -8036,6 +8187,8 @@ FLAGTILESPRITE.prototype.setFrame = function(frame){
 
 FLAGTILESPRITE.prototype.stop = function(){
 	this.playing = false;
+	//reset the amount of loops, since the animation has stopped
+	this.loops = 0;
 }
 
 
