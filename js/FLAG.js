@@ -4,11 +4,10 @@
 FLAG Game Engine - FLAG.js
 Author: Zac Zidik
 URL: www.flagamengine.com
-version 3.0.20
-updated 3/5/2015
+version 3.0.19
+updated 10/6/2016
 
-This is the engine code for the FLAG Game Engine. You can use this file locally,
-on your server, or the most up to date version at www.flagamengine.com/FLAG/FLAG.js
+This is the engine code for the FLAG Game Engine.
 
 Thanks for trying out the FLAG Game Engine and good luck!
 ----------------------------------------------------------------------------------------------
@@ -55,6 +54,8 @@ function FLAGENGINE(game,canvas,gui,glass){
 	this.Walkables = {on:false,color_0:"#FF0000",color_1:"#00FF00",alpha:.25};
 	this.WebGL = null;
 	this.zoom = {in:2,out:.5};	
+	
+	this.resizeTimer;
 	
 	//WebGL
 	if(this.contextType == 'webgl'){
@@ -940,43 +941,23 @@ FLAGENGINE.prototype.cycleSpriteFrames = function(){
 	//CYCLE TILE SPRITE FRAMES
 	var numTileSprites = this.Scene.tileSprites.length;
 	for(var i=0;i<numTileSprites;i++){
-		var tiledSprite = this.Scene.tileSprites[i];
 		//make sure tileSheet is right
-		if(this.Scene.layers[tiledSprite.layer].tileSheetIDs[tiledSprite.row][tiledSprite.col] != tiledSprite.pIndex){
-			this.Scene.layers[tiledSprite.layer].tileSheetIDs[tiledSprite.row][tiledSprite.col] = tiledSprite.pIndex;
+		if(this.Scene.layers[this.Scene.tileSprites[i].layer].tileSheetIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] != this.Scene.tileSprites[i].pIndex){
+			this.Scene.layers[this.Scene.tileSprites[i].layer].tileSheetIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] = this.Scene.tileSprites[i].pIndex;
 		}
 		//make sure tile fits inside animation
-		if(this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] < this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].startFrame){
-			this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] = this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].startFrame;
-		}else if(this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] > this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].endFrame){
-			this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] = this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].endFrame;
+		if(this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] < this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].startFrame){
+			this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] = this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].startFrame;
+		}else if(this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] > this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].endFrame){
+			this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] = this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].endFrame;
 		}
 	
-		if(this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] < this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].endFrame){
-			if(tiledSprite.playing == true){
-				this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] += 1;
-			}		
-		//check if the tile sprite is set to loop	
-		}else if(tiledSprite.loop == true  && tiledSprite.playing == true){
-			//is there a loop count
-			if(tiledSprite.loopCount != null){
-				//add one to the loops
-				tiledSprite.loops += 1;
-				//is number of times it has looped less than the loop count
-				if(tiledSprite.loops < tiledSprite.loopCount){
-					//loop back to the beginning of the animation
-					this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] = this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].startFrame;				
-				}else{
-					//stop the animation
-					tiledSprite.stop();
-				}
-			}else{
-				//loop back to the beginning of the animation
-				this.Scene.layers[tiledSprite.layer].tileIDs[tiledSprite.row][tiledSprite.col] = this.Scene.tileSheets[tiledSprite.pIndex].animations[tiledSprite.animation].startFrame;
-			}				
-		}else{
-			//stop the animation
-			tiledSprite.stop();			
+		if(this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] < this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].endFrame){
+			if(this.Scene.tileSprites[i].playing == true){
+				this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] += 1;
+			}
+		}else if(this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].loop == true && this.Scene.tileSprites[i].playing == true){
+			this.Scene.layers[this.Scene.tileSprites[i].layer].tileIDs[this.Scene.tileSprites[i].row][this.Scene.tileSprites[i].col] = this.Scene.tileSheets[this.Scene.tileSprites[i].pIndex].animations[this.Scene.tileSprites[i].animation].startFrame;
 		}
 	}
 	
@@ -987,28 +968,9 @@ FLAGENGINE.prototype.cycleSpriteFrames = function(){
 		if(tiledObject.animation != null && tiledObject.playing == true){
 			//cycle the tile object's animation frames 
 			if(tiledObject.frame < this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].endFrame){
-				tiledObject.frame += 1;				
-			//check if the tiled object is set to loop	
-			}else if(tiledObject.loop == true){
-				//is there a loop count
-				if(tiledObject.loopCount != null){
-					//add one to the loops
-					tiledObject.loops += 1;
-					//is number of times it has looped less than the loop count
-					if(tiledObject.loops < tiledObject.loopCount){
-						//loop back to the beginning of the animation
-						tiledObject.frame = this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].startFrame;					
-					}else{
-						//stop the animation
-						tiledObject.stop();
-					}
-				}else{
-					//loop back to the beginning of the animation
-					tiledObject.frame = this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].startFrame;					
-				}				
-			}else{
-				//stop the animation
-				tiledObject.stop();			
+				tiledObject.frame += 1;	
+			}else if(this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].loop == true){
+				tiledObject.frame = this.Scene.tiledObjectSheets[tiledObject.pIndex].animations[tiledObject.animation].startFrame;
 			}
 		}
 	}
@@ -1016,63 +978,24 @@ FLAGENGINE.prototype.cycleSpriteFrames = function(){
 	//CYCLE SPRITE FRAMES
 	var numOfSprites = this.Scene.sprites.length;
 	for(var s=0;s<numOfSprites;s++){
-		var sprite = this.Scene.sprites[s];
-		if(sprite.animation != null && sprite.playing == true){
+		if(this.Scene.sprites[s].animation != null && this.Scene.sprites[s].playing == true){
 			//cycle the scene's decal animation frames
-			if(sprite.frame < this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].endFrame){
-				sprite.frame += 1;	
-			//check if the sprite itself is set to loop	
-			}else if(sprite.loop == true){
-				//is there a loop count
-				if(sprite.loopCount != null){
-					//add one to the loops
-					sprite.loops += 1;
-					//is number of times it has looped less than the loop count
-					if(sprite.loops < sprite.loopCount){
-						//loop back to the beginning of the animation
-						sprite.frame = this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].startFrame;						
-					}else{
-						//stop the animation
-						sprite.stop();
-					}
-				}else{
-					//loop back to the beginning of the animation
-					sprite.frame = this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].startFrame;
-				}				
-			}else{
-				//stop the animation
-				sprite.stop();
+			if(this.Scene.sprites[s].frame < this.Scene.spriteSheets[this.Scene.sprites[s].pIndex].animations[this.Scene.sprites[s].animation].endFrame){
+				this.Scene.sprites[s].frame += 1;	
+			}else if(this.Scene.spriteSheets[this.Scene.sprites[s].pIndex].animations[this.Scene.sprites[s].animation].loop == true){
+				this.Scene.sprites[s].frame = this.Scene.spriteSheets[this.Scene.sprites[s].pIndex].animations[this.Scene.sprites[s].animation].startFrame;
 			}
 		}
 		
 		//SPRITE DECALS
-		var numOfDecals = sprite.decals.length;
+		var numOfDecals = this.Scene.sprites[s].decals.length;
 		for(var d=0;d<numOfDecals;d++){
-			if(sprite.decals[d].animation != null && sprite.decals[d].playing == true){
+			if(this.Scene.sprites[s].decals[d].animation != null && this.Scene.sprites[s].decals[d].playing == true){
 				//cycle the actors' decal animation frames
-				if(sprite.decals[d].frame < this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].endFrame){
-					sprite.decals[d].frame += 1;					
-				//check if the decal itself is set to loop	
-				}else if(sprite.decals[d].loop == true){
-					//is there a loop count
-					if(sprite.decals[d].loopCount != null){
-						//add one to the loops
-						sprite.decals[d].loops += 1;
-						//is number of times it has looped less than the loop count
-						if(sprite.decals[d].loops < sprite.decals[d].loopCount){
-							//loop back to the beginning of the animation
-							sprite.decals[d].frame = this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].startFrame;					
-						}else{
-							//stop the animation
-							sprite.decals[d].stop();
-						}
-					}else{
-						//loop back to the beginning of the animation
-						sprite.decals[d].frame = this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].startFrame;
-					}				
-				}else{
-					//stop the animation
-					sprite.decals[d].stop();
+				if(this.Scene.sprites[s].decals[d].frame < this.Scene.spriteSheets[this.Scene.sprites[s].decals[d].pIndex].animations[this.Scene.sprites[s].decals[d].animation].endFrame){
+					this.Scene.sprites[s].decals[d].frame += 1;	
+				}else if(this.Scene.spriteSheets[this.Scene.sprites[s].decals[d].pIndex].animations[this.Scene.sprites[s].decals[d].animation].loop == true){
+					this.Scene.sprites[s].decals[d].frame = this.Scene.spriteSheets[this.Scene.sprites[s].decals[d].pIndex].animations[this.Scene.sprites[s].decals[d].animation].startFrame;
 				}
 			}
 		}
@@ -1085,65 +1008,26 @@ FLAGENGINE.prototype.cycleSpriteFrames = function(){
 		var bodiesToKeep = [];
 		var bodiesToDestroy = [];
 		for(var j=0;j<numBodies;j++){
-			var sprite = this.Scene.actors[i].bodies[j].Sprite;		
-			if(sprite !== null){
+			if(this.Scene.actors[i].bodies[j].Sprite !== null){
 				//BODY SPRITE
-				if(sprite.animation != null && sprite.playing == true){
+				if(this.Scene.actors[i].bodies[j].Sprite.animation != null && this.Scene.actors[i].bodies[j].Sprite.playing == true){
 					//cycle the actors' animation frames 
-					if(sprite.frame < this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].endFrame){
-						sprite.frame += 1;					
-					//check if the sprite itself is set to loop	
-					}else if(sprite.loop == true){
-						//is there a loop count
-						if(sprite.loopCount != null){
-							//add one to the loops
-							sprite.loops += 1;
-							//is number of times it has looped less than the loop count
-							if(sprite.loops < sprite.loopCount){
-								//loop back to the beginning of the animation
-								sprite.frame = this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].startFrame;						
-							}else{
-								//stop the animation
-								sprite.stop();
-							}
-						}else{
-							//loop back to the beginning of the animation
-							sprite.frame = this.Scene.spriteSheets[sprite.pIndex].animations[sprite.animation].startFrame;
-						}				
-					}else{
-						//stop the animation
-						sprite.stop();
+					if(this.Scene.actors[i].bodies[j].Sprite.frame < this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.animation].endFrame){
+						this.Scene.actors[i].bodies[j].Sprite.frame += 1;	
+					}else if(this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.animation].loop == true){
+						this.Scene.actors[i].bodies[j].Sprite.frame = this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.animation].startFrame;
 					}
 				}
 		
 				//BODY SPRITE DECALS
-				var numOfDecals = sprite.decals.length;
+				var numOfDecals = this.Scene.actors[i].bodies[j].Sprite.decals.length;
 				for(var d=0;d<numOfDecals;d++){
-					if(sprite.decals[d].animation != null && sprite.decals[d].playing == true){
+					if(this.Scene.actors[i].bodies[j].Sprite.decals[d].animation != null && this.Scene.actors[i].bodies[j].Sprite.decals[d].playing == true){
 						//cycle the actors' decal animation frames
-						if(sprite.decals[d].frame < this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].endFrame){
-							sprite.decals[d].frame += 1;
-						//check if the decal itself is set to loop	
-						}else if(sprite.decals[d].loop == true){
-							//is there a loop count
-							if(sprite.decals[d].loopCount != null){
-								//add one to the loops
-								sprite.decals[d].loops += 1;
-								//is number of times it has looped less than the loop count
-								if(sprite.decals[d].loops < sprite.decals[d].loopCount){
-									//loop back to the beginning of the animation
-									sprite.decals[d].frame = this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].startFrame;					
-								}else{
-									//stop the animation
-									sprite.decals[d].stop();
-								}
-							}else{
-								//loop back to the beginning of the animation
-								sprite.decals[d].frame = this.Scene.spriteSheets[sprite.decals[d].pIndex].animations[sprite.decals[d].animation].startFrame;
-							}				
-						}else{
-							//stop the animation
-							sprite.decals[d].stop();
+						if(this.Scene.actors[i].bodies[j].Sprite.decals[d].frame < this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.decals[d].pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.decals[d].animation].endFrame){
+							this.Scene.actors[i].bodies[j].Sprite.decals[d].frame += 1;	
+						}else if(this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.decals[d].pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.decals[d].animation].loop == true){
+							this.Scene.actors[i].bodies[j].Sprite.decals[d].frame = this.Scene.spriteSheets[this.Scene.actors[i].bodies[j].Sprite.decals[d].pIndex].animations[this.Scene.actors[i].bodies[j].Sprite.decals[d].animation].startFrame;
 						}
 					}
 				}
@@ -1822,6 +1706,13 @@ FLAGENGINE.prototype.draw = function(){
 		totalAvgFPS += this.FPS.avgA[i];
 	}
 	this.FPS.avg = Math.floor(totalAvgFPS/lengthOfAvg);
+	
+	
+	//continuously updates the location of the Pointer
+	if(this.Scene != null){
+		this.Pointer.mapLoc.x = ((this.Pointer.screenLoc.x-((this.Scene.Map.x*(this.scale)))*(this.Scene.scale)) / (this.Scene.scale)) / (this.scale);
+    	this.Pointer.mapLoc.y = ((this.Pointer.screenLoc.y-((this.Scene.Map.y*(this.scale)))*(this.Scene.scale)) / (this.Scene.scale)) / (this.scale);
+    }
 };
 
 FLAGENGINE.prototype.drawActors = function(numOfActors,i,j,layer){	
@@ -1935,6 +1826,21 @@ FLAGENGINE.prototype.drawSprites = function(row,col,layer){
 				
 				this.Context.globalAlpha = 1;
 				
+				//SPRITE HIT BOX
+				if(this.Scene.sprites[s].showHitBox == true){
+					this.Context.strokeStyle = "#00ff00";
+					this.Context.beginPath();
+					this.Context.moveTo((point.x),(point.y));
+					this.Context.lineTo((point.x+(rect.w)),(point.y));
+					this.Context.lineTo((point.x+(rect.w)),(point.y+(rect.h)));
+					this.Context.lineTo((point.x),(point.y+(rect.h)));
+					this.Context.closePath();
+					this.Context.lineWidth = 1;
+					this.Context.stroke();					
+				}
+				
+				this.Context.globalAlpha = 1;
+				
 				//SPRITE DECAL DRAW -- front
 				var numOfDecals = this.Scene.sprites[s].decals.length;
 				for(var d=0;d<numOfDecals;d++){
@@ -2023,6 +1929,7 @@ FLAGENGINE.prototype.imageSmoothing = function(smooth){
 	//SMOOTH
 	if(smooth == true){
 		//Browser compatibility - Chrome, Firefox, Opera
+		//this.Context.webkitImageSmoothingEnabled = true;
 		this.Context.imageSmoothingEnabled = true;
 		this.Context.mozImageSmoothingEnabled = true;
 		this.Context.oImageSmoothingEnabled = true;
@@ -2034,6 +1941,7 @@ FLAGENGINE.prototype.imageSmoothing = function(smooth){
   	//PIXELY
 	}else if(smooth == false){
 		//Browser compatibility - Chrome, Firefox, Opera
+		//this.Context.webkitImageSmoothingEnabled = false;
 		this.Context.imageSmoothingEnabled = false;
 		this.Context.mozImageSmoothingEnabled = false;
 		this.Context.oImageSmoothingEnabled = false;
@@ -2223,14 +2131,14 @@ FLAGENGINE.prototype.mouseDown = function(e){
 	if (e.stopPropagation) e.stopPropagation();
 
 	if(this.Scene != null){
-		this.Pointer.downLoc.x = e.offsetX - (this.Scene.Map.x*(this.scale)*(this.Scene.scale));
-		this.Pointer.downLoc.y = e.offsetY - (this.Scene.Map.y*(this.scale)*(this.Scene.scale));
+		this.Pointer.downLoc.x = e.pageX - (this.Scene.Map.x*(this.scale)*(this.Scene.scale));
+		this.Pointer.downLoc.y = e.pageY - (this.Scene.Map.y*(this.scale)*(this.Scene.scale));
 	}else{
-		this.Pointer.downLoc.x = e.offsetX;
-		this.Pointer.downLoc.y = e.offsetY;
+		this.Pointer.downLoc.x = e.pageX;
+		this.Pointer.downLoc.y = e.pageY;
 	}
-	this.Pointer.screenLoc.x = e.offsetX;
-	this.Pointer.screenLoc.y = e.offsetY;
+	this.Pointer.screenLoc.x = e.pageX;
+	this.Pointer.screenLoc.y = e.pageY;
 	if(this.Scene != null){
 		this.Pointer.mapLoc.x = ((this.Pointer.screenLoc.x-((this.Scene.Map.x*(this.scale)))*(this.Scene.scale)) / (this.Scene.scale)) / (this.scale);
 		this.Pointer.mapLoc.y = ((this.Pointer.screenLoc.y-((this.Scene.Map.y*(this.scale)))*(this.Scene.scale)) / (this.Scene.scale)) / (this.scale);
@@ -2252,8 +2160,8 @@ FLAGENGINE.prototype.mouseMove = function(e){
 	e.cancelBubble = true;
 	if (e.stopPropagation) e.stopPropagation();
 
-    this.Pointer.screenLoc.x = e.offsetX;
-	this.Pointer.screenLoc.y = e.offsetY;
+    this.Pointer.screenLoc.x = e.pageX;
+	this.Pointer.screenLoc.y = e.pageY;
 	if(this.Scene != null){
 		this.Pointer.mapLoc.x = ((this.Pointer.screenLoc.x-((this.Scene.Map.x*(this.scale)))*(this.Scene.scale)) / (this.Scene.scale)) / (this.scale);
     	this.Pointer.mapLoc.y = ((this.Pointer.screenLoc.y-((this.Scene.Map.y*(this.scale)))*(this.Scene.scale)) / (this.Scene.scale)) / (this.scale);
@@ -2625,6 +2533,7 @@ FLAGENGINE.prototype.removeTileSprite = function(instanceName){
 //SCALE GAME
 //------------------------------------------------------------------
 FLAGENGINE.prototype.scaleGame = function(){
+
 	if(this.Scene != null){
 		switch(POLE.display.fit){
 		
@@ -3716,11 +3625,6 @@ FLAGENGINE.prototype.Tween = function(object, property, targetVal, duration, eas
     	case "margin-left":
 			var style = window.getComputedStyle(object),
     		b = style.getPropertyValue('margin-left');
-    		object = object.style;
-    		break;
-    	case "margin-top":
-			var style = window.getComputedStyle(object),
-    		b = style.getPropertyValue('margin-top');
     		object = object.style;
     		break;
     	case "opacity":
@@ -5499,66 +5403,22 @@ FLAGACTOR.prototype.Body = function(name){
 	}
 }
 
-FLAGACTOR.prototype.cameraFollow = function(hideEdge){
-	var limit = {};
-	var limitAmount = hideEdge || 0;
-		
-	if(FLAG.Scene.Map.type == "orthogonal" || FLAG.Scene.Map.type == "hexagonal"){
-		limit.x_low = FLAG.Canvas.width - FLAG.Scene.Map.w + limitAmount;
-		limit.x_high = 0-limitAmount;
-		limit.y_low = FLAG.Canvas.height - FLAG.Scene.Map.h + limitAmount;
-		limit.y_high = 0-limitAmount;
-	}else if(FLAG.Scene.Map.type == "isometric"){
-		limit.x_low = FLAG.Canvas.width - (FLAG.Scene.Map.w/2) + limitAmount;
-		limit.x_high = (FLAG.Scene.Map.w/2) - limitAmount;
-		limit.y_low = FLAG.Canvas.height - FLAG.Scene.Map.h + limitAmount;
-		limit.y_high = 0-limitAmount;
-	}
-		
+FLAGACTOR.prototype.cameraFollow = function(){	
 	//target destination of camera
-	var destination = {x:Math.round((FLAG.center.x) - (this.bodies[0].fb2Body.GetPosition().x*FLAG.Box2D.scale)),y:Math.round((FLAG.center.y) - (this.bodies[0].fb2Body.GetPosition().y*FLAG.Box2D.scale))};
-
-	if(FLAG.Canvas.width < FLAG.Scene.Map.w){
-		//LIMITS
-		if(limit.x_low != null){
-			if(destination.x < limit.x_low ){
-				destination.x = limit.x_low;
-			}
-		}
-
-		if(limit.x_high != null){
-			if(destination.x > limit.x_high ){
-				destination.x = limit.x_high;
-			}
-		}			
-	}else{
-		if(FLAG.Scene.Map.type == "orthogonal" || FLAG.Scene.Map.type == "hexagonal"){
-			destination.x = FLAG.center.x - (FLAG.Scene.Map.w/2);					
-		}else if(FLAG.Scene.Map.type == "isometric"){
-			destination.x = FLAG.center.x;
-		}
-	}
-
-	if(FLAG.Canvas.height < FLAG.Scene.Map.h){
-		//LIMITS
-		if(limit.y_low != null){
-			if(destination.y < limit.y_low ){
-				destination.y = limit.y_low;
-			}
-		}
-
-		if(limit.y_high != null){
-			if(destination.y > limit.y_high ){
-				destination.y = limit.y_high;
-			}
-		}	
-	}else{
-		destination.y = FLAG.center.y - (FLAG.Scene.Map.h/2);					
-	}
-
+	var destination = {x:Math.round((FLAG.center.x) - (this.bodies[0].fb2Body.GetPosition().x*FLAG.Box2D.scale*FLAG.Scene.scale)), y:Math.round((FLAG.center.y) - (this.bodies[0].fb2Body.GetPosition().y*FLAG.Box2D.scale*FLAG.Scene.scale))};
+	
+	//new position for camera camera
+	var newPos = {x:0,y:0};
+	newPos.x = Math.round(FLAG.Scene.Map.x + (destination.x - FLAG.Scene.Map.x));
+	newPos.y = Math.round(FLAG.Scene.Map.y + (destination.y - FLAG.Scene.Map.y));
+	
+	//adjust the position for scale
+	newPos.x = Math.floor((newPos.x * (1/(FLAG.scale))) * (1/FLAG.Scene.scale));
+	newPos.y = Math.floor((newPos.y * (1/(FLAG.scale))) * (1/FLAG.Scene.scale));
+	
 	//move camera
-	FLAG.Scene.Map.x = Math.round(FLAG.Scene.Map.x + (destination.x - FLAG.Scene.Map.x));
-	FLAG.Scene.Map.y = Math.round(FLAG.Scene.Map.y + (destination.y - FLAG.Scene.Map.y));		
+	FLAG.Scene.Map.x = newPos.x;
+	FLAG.Scene.Map.y = newPos.y;	
 }
 
 FLAGACTOR.prototype.clicked = function(){
@@ -6167,66 +6027,23 @@ FLAGBODY.prototype.applyTorque = function(torque){
 	this.fb2Body.ApplyTorque(torque);
 }
 
-FLAGBODY.prototype.cameraFollow = function(hideEdge){
-	var limit = {};
-	var limitAmount = hideEdge || 0;
-		
-	if(FLAG.Scene.Map.type == "orthogonal" || FLAG.Scene.Map.type == "hexagonal"){
-		limit.x_low = FLAG.Canvas.width - FLAG.Scene.Map.w + limitAmount;
-		limit.x_high = 0-limitAmount;
-		limit.y_low = FLAG.Canvas.height - FLAG.Scene.Map.h + limitAmount;
-		limit.y_high = 0-limitAmount;
-	}else if(FLAG.Scene.Map.type == "isometric"){
-		limit.x_low = FLAG.Canvas.width - (FLAG.Scene.Map.w/2) + limitAmount;
-		limit.x_high = (FLAG.Scene.Map.w/2) - limitAmount;
-		limit.y_low = FLAG.Canvas.height - FLAG.Scene.Map.h + limitAmount;
-		limit.y_high = 0-limitAmount;
-	}
-		
+FLAGBODY.prototype.cameraFollow = function(){
+
 	//target destination of camera
-	var destination = {x:Math.round((FLAG.center.x) - (this.fb2Body.GetPosition().x*FLAG.Box2D.scale)),y:Math.round((FLAG.center.y) - (this.fb2Body.GetPosition().y*FLAG.Box2D.scale))};
-
-	if(FLAG.Canvas.width < FLAG.Scene.Map.w){
-		//LIMITS
-		if(limit.x_low != null){
-			if(destination.x < limit.x_low ){
-				destination.x = limit.x_low;
-			}
-		}
-
-		if(limit.x_high != null){
-			if(destination.x > limit.x_high ){
-				destination.x = limit.x_high;
-			}
-		}			
-	}else{
-		if(FLAG.Scene.Map.type == "orthogonal" || FLAG.Scene.Map.type == "hexagonal"){
-			destination.x = FLAG.center.x - (FLAG.Scene.Map.w/2);					
-		}else if(FLAG.Scene.Map.type == "isometric"){
-			destination.x = FLAG.center.x;
-		}
-	}
-
-	if(FLAG.Canvas.height < FLAG.Scene.Map.h){
-		//LIMITS
-		if(limit.y_low != null){
-			if(destination.y < limit.y_low ){
-				destination.y = limit.y_low;
-			}
-		}
-
-		if(limit.y_high != null){
-			if(destination.y > limit.y_high ){
-				destination.y = limit.y_high;
-			}
-		}	
-	}else{
-		destination.y = FLAG.center.y - (FLAG.Scene.Map.h/2);					
-	}
-
+	var destination = {x:Math.round((FLAG.center.x) - (this.fb2Body.GetPosition().x*FLAG.Box2D.scale*FLAG.Scene.scale)), y:Math.round((FLAG.center.y) - (this.fb2Body.GetPosition().y*FLAG.Box2D.scale*FLAG.Scene.scale))};
+	
+	//new position for camera camera
+	var newPos = {x:0,y:0};
+	newPos.x = Math.round(FLAG.Scene.Map.x + (destination.x - FLAG.Scene.Map.x));
+	newPos.y = Math.round(FLAG.Scene.Map.y + (destination.y - FLAG.Scene.Map.y));
+	
+	//adjust the position for scale
+	newPos.x = Math.floor((newPos.x * (1/(FLAG.scale))) * (1/FLAG.Scene.scale));
+	newPos.y = Math.floor((newPos.y * (1/(FLAG.scale))) * (1/FLAG.Scene.scale));
+	
 	//move camera
-	FLAG.Scene.Map.x = Math.round(FLAG.Scene.Map.x + (destination.x - FLAG.Scene.Map.x));
-	FLAG.Scene.Map.y = Math.round(FLAG.Scene.Map.y + (destination.y - FLAG.Scene.Map.y));	
+	FLAG.Scene.Map.x = newPos.x;
+	FLAG.Scene.Map.y = newPos.y;
 }
 
 FLAGBODY.prototype.clicked = function(){	
@@ -7364,13 +7181,11 @@ function FLAGSPRITE(name,pIndex,x,y,frame,animation,layer,playing,alpha,gui,fron
 	if(front == undefined){this.front = true}else{this.front = front};
 	if(gui == undefined){this.gui = false}else{this.gui = gui};
 	if(layer == undefined){this.layer = 0}else{this.layer = layer};
-	this.loop = true;
-	this.loopCount = null;
-	this.loops = 0;
 	this.name = name;
 	this.pIndex = pIndex;
 	if(playing == undefined){this.playing = true}else{this.playing = playing};
 	this.scale = 1;
+	this.showHitBox = false;
 	this.tileNext = null;
 	this.tileOn = {row:0,col:0};
 	this.x = x;
@@ -7479,94 +7294,63 @@ FLAGSPRITE.prototype.addDecal = function(p){
 	}
 }
 
-FLAGSPRITE.prototype.cameraFollow = function(hideEdge){
-	var limit = {};
-	var limitAmount = hideEdge || 0;
-		
-	if(FLAG.Scene.Map.type == "orthogonal" || FLAG.Scene.Map.type == "hexagonal"){
-		limit.x_low = FLAG.Canvas.width - FLAG.Scene.Map.w + limitAmount;
-		limit.x_high = 0-limitAmount;
-		limit.y_low = FLAG.Canvas.height - FLAG.Scene.Map.h + limitAmount;
-		limit.y_high = 0-limitAmount;
-	}else if(FLAG.Scene.Map.type == "isometric"){
-		limit.x_low = FLAG.Canvas.width - (FLAG.Scene.Map.w/2) + limitAmount;
-		limit.x_high = (FLAG.Scene.Map.w/2) - limitAmount;
-		limit.y_low = FLAG.Canvas.height - FLAG.Scene.Map.h + limitAmount;
-		limit.y_high = 0-limitAmount;
-	}
-		
+FLAGSPRITE.prototype.cameraFollow = function(){
+
 	//target destination of camera
-	var destination = {x:Math.round((FLAG.center.x) - (this.x)),y:Math.round((FLAG.center.y) - (this.y))};
-
-	if(FLAG.Canvas.width < FLAG.Scene.Map.w){
-		//LIMITS
-		if(limit.x_low != null){
-			if(destination.x < limit.x_low ){
-				destination.x = limit.x_low;
-			}
-		}
-
-		if(limit.x_high != null){
-			if(destination.x > limit.x_high ){
-				destination.x = limit.x_high;
-			}
-		}			
-	}else{
-		if(FLAG.Scene.Map.type == "orthogonal" || FLAG.Scene.Map.type == "hexagonal"){
-			destination.x = FLAG.center.x - (FLAG.Scene.Map.w/2);					
-		}else if(FLAG.Scene.Map.type == "isometric"){
-			destination.x = FLAG.center.x;
-		}
-	}
-
-	if(FLAG.Canvas.height < FLAG.Scene.Map.h){
-		//LIMITS
-		if(limit.y_low != null){
-			if(destination.y < limit.y_low ){
-				destination.y = limit.y_low;
-			}
-		}
-
-		if(limit.y_high != null){
-			if(destination.y > limit.y_high ){
-				destination.y = limit.y_high;
-			}
-		}	
-	}else{
-		destination.y = FLAG.center.y - (FLAG.Scene.Map.h/2);					
-	}
-
+	var destination = {x:Math.round((FLAG.center.x) - (this.x * FLAG.Scene.scale)), y:Math.round((FLAG.center.y) - (this.y * FLAG.Scene.scale))};
+	
+	//new position for camera camera
+	var newPos = {x:0,y:0};
+	newPos.x = Math.round(FLAG.Scene.Map.x + (destination.x - FLAG.Scene.Map.x));
+	newPos.y = Math.round(FLAG.Scene.Map.y + (destination.y - FLAG.Scene.Map.y));
+	
+	//adjust the position for scale
+	newPos.x = Math.floor((newPos.x * (1/(FLAG.scale))) * (1/FLAG.Scene.scale));
+	newPos.y = Math.floor((newPos.y * (1/(FLAG.scale))) * (1/FLAG.Scene.scale));
+	
 	//move camera
-	FLAG.Scene.Map.x = Math.round(FLAG.Scene.Map.x + (destination.x - FLAG.Scene.Map.x));
-	FLAG.Scene.Map.y = Math.round(FLAG.Scene.Map.y + (destination.y - FLAG.Scene.Map.y));	
+	FLAG.Scene.Map.x = newPos.x;
+	FLAG.Scene.Map.y = newPos.y;
 }
 
 FLAGSPRITE.prototype.clicked = function(){
-	//an array to hold the names of the sprites clicked
-	var spritesClicked = [];
-	//get the mouse position
-	var clickPoint = {x:FLAG.Pointer.mapLoc.x, y:FLAG.Pointer.mapLoc.y};
-	var spriteRect = FLAG.Scene.spriteSheets[this.pIndex].tileRects[this.frame];
-	var offset = {x:FLAG.Scene.spriteSheets[this.pIndex].offset.x,y:FLAG.Scene.spriteSheets[this.pIndex].offset.y};
-	if(this.gui == false){
-		var spritePoint = {x:this.x+offset.x, y:this.y+offset.y};
-	}else if(this.gui == true){
-		var spritePoint = {x:this.x-FLAG.Scene.Map.x+offset.y, y:this.y-FLAG.Scene.Map.y+offset.y};
-	}
+
+	//if this sprite is currently being draw
+	if(this.draw == true){
+		//an array to hold the names of the sprites clicked
+		var spritesClicked = [];
+		//get the mouse position
+		var clickPoint = {x:FLAG.Pointer.mapLoc.x, y:FLAG.Pointer.mapLoc.y};
+		var spriteRect = FLAG.Scene.spriteSheets[this.pIndex].tileRects[this.frame];
+		var offset = {x:FLAG.Scene.spriteSheets[this.pIndex].offset.x,y:FLAG.Scene.spriteSheets[this.pIndex].offset.y};
+		if(this.gui == false){
+			var spritePoint = {x:this.x+offset.x, y:this.y+offset.y};
+		}else if(this.gui == true){
+			var spritePoint = {x:this.x-FLAG.Scene.Map.x+offset.y, y:this.y-FLAG.Scene.Map.y+offset.y};
+		}
+		//animation offset
+		if(this.animation != null){
+			var animationOffset = {x:Math.floor(FLAG.Scene.spriteSheets[this.pIndex].animations[this.animation].offset.x), y:Math.floor(FLAG.Scene.spriteSheets[this.pIndex].animations[this.animation].offset.y)};
+			spritePoint.x += animationOffset.x;
+			spritePoint.y += animationOffset.y;
+		}
 	
-	//set up the rect to check
-	var checkRect = {x:0,y:0,w:0,h:0};
-	checkRect.x = spritePoint.x - ((spriteRect.w/2)*FLAG.scale);
-	checkRect.y = spritePoint.y - ((spriteRect.h/2)*FLAG.scale);
-	checkRect.w = spriteRect.w*FLAG.scale;
-	checkRect.h = spriteRect.h*FLAG.scale;
+		//set up the rect to check
+		var checkRect = {x:0,y:0,w:0,h:0};
+		checkRect.x = spritePoint.x - ((spriteRect.w/2)*FLAG.scale);
+		checkRect.y = spritePoint.y - ((spriteRect.h/2)*FLAG.scale);
+		checkRect.w = spriteRect.w*FLAG.scale;
+		checkRect.h = spriteRect.h*FLAG.scale;
 
-	if(FLAG.pointInRect(clickPoint,checkRect) == true){
-		spritesClicked.push(this.name);
-	}
+		if(FLAG.pointInRect(clickPoint,checkRect) == true){
+			spritesClicked.push(this.name);
+		}
 
-	if(spritesClicked.length > 0){
-		return true;
+		if(spritesClicked.length > 0){
+			return true;
+		}else{
+			return false;
+		}
 	}else{
 		return false;
 	}
@@ -7641,7 +7425,12 @@ FLAGSPRITE.prototype.drag = function(){
 }
 
 FLAGSPRITE.prototype.getAnimation = function(){
-	return {index:this.animation,name:FLAG.Scene.spriteSheets[this.pIndex].animations[this.animation].name};
+
+	if(this.animation != null){
+		return {index:this.animation,name:FLAG.Scene.spriteSheets[this.pIndex].animations[this.animation].name};
+	}else{
+		console.log("No animation is currently assigned to this sprite.");
+	}
 }
 
 FLAGSPRITE.prototype.isometricMove = function(speed){
@@ -7739,11 +7528,6 @@ FLAGSPRITE.prototype.removeDecal = function(decal){
 
 FLAGSPRITE.prototype.setAnimation = function(animation){
 	var animationFound = -1;
-	//if animation is given as null
-	if(animation == null){
-		//set the animation to null
-		this.animation = null;
-	}
 	//if the animation is given as a name
 	if(isNaN(animation) == true){
 		//find the number that matches the name in the sprites
@@ -7765,9 +7549,6 @@ FLAGSPRITE.prototype.setAnimation = function(animation){
 		this.frame = FLAG.Scene.spriteSheets[this.pIndex].animations[animationFound].startFrame;
 		this.animation = animationFound;
 	}
-	
-	//reset the amount of loops, since the animation was just changed
-	this.loops = 0;
 }
 
 FLAGSPRITE.prototype.setFrame = function(frame){
@@ -7796,9 +7577,7 @@ FLAGSPRITE.prototype.setFrame = function(frame){
 }
 
 FLAGSPRITE.prototype.stop = function(){
-	this.playing = false;	
-	//reset the amount of loops, since the animation has stopped
-	this.loops = 0;
+	this.playing = false;
 }
 
 FLAGSPRITE.prototype.tilePath = function(p){
@@ -8018,9 +7797,6 @@ function FLAGTILEDOBJECT(name,pIndex,layer,row,col,animation,frame){
 	this.decals = [];
 	this.frame = frame || 0;
 	this.layer = layer;
-	this.loop = true;
-	this.loopCount = null;
-	this.loops = 0;
 	this.name = name;
 	this.playing = true;
 	this.row = row;
@@ -8037,11 +7813,6 @@ FLAGTILEDOBJECT.prototype.play = function(){
 
 FLAGTILEDOBJECT.prototype.setAnimation = function(animation){
 	var animationFound = -1;
-	//if animation is given as null
-	if(animation == null){
-		//set the animation to null
-		this.animation = null;
-	}
 	//if the animation is given as a name
 	if(isNaN(animation) == true){
 		//find the number that matches the name in the tiledObjectSheets
@@ -8092,8 +7863,6 @@ FLAGTILEDOBJECT.prototype.setFrame = function(frame){
 
 FLAGTILEDOBJECT.prototype.stop = function(){
 	this.playing = false;
-	//reset the amount of loops, since the animation has stopped
-	this.loops = 0;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------
@@ -8113,9 +7882,6 @@ function FLAGTILESPRITE(name,pIndex,row,col,animation,frame,layer,playing){
 	this.col = col;
 	this.frame = frame;
 	this.layer = layer;
-	this.loop = true;
-	this.loopCount = null;
-	this.loops = 0;
 	this.name = name;
 	this.pIndex = pIndex;
 	this.playing = playing || true;
@@ -8132,11 +7898,6 @@ FLAGTILESPRITE.prototype.play = function(){
 
 FLAGTILESPRITE.prototype.setAnimation = function(animation){
 	var animationFound = -1;
-	//if animation is given as null
-	if(animation == null){
-		//set the animation to null
-		this.animation = null;
-	}
 	//if the animation is given as a name
 	if(isNaN(animation) == true){
 		//find the number that matches the name in the tileSheets
@@ -8187,8 +7948,6 @@ FLAGTILESPRITE.prototype.setFrame = function(frame){
 
 FLAGTILESPRITE.prototype.stop = function(){
 	this.playing = false;
-	//reset the amount of loops, since the animation has stopped
-	this.loops = 0;
 }
 
 
